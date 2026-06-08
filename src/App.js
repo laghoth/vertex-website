@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   FaPlane,
   FaShip,
@@ -10,18 +10,188 @@ import {
   FaTimes,
   FaShieldAlt,
   FaArrowRight,
+  FaChevronUp,
 } from "react-icons/fa";
 import { FiActivity } from "react-icons/fi";
+
+const NAV_LINKS = [
+  { label: "THE GROUP", href: "#about" },
+  { label: "OUR SERVICES", href: "#services" },
+  { label: "TRACKING", href: "#tracking" },
+  { label: "CONTACT", href: "#contact" },
+];
+
+const SECTION_IDS = ["about", "services", "tracking", "contact", "quote"];
+
+const SERVICES = [
+  {
+    icon: FaPlane,
+    title: "Air Freight",
+    description:
+      "Shipping your high-value or time-critical goods to the ends of the earth in no time.",
+  },
+  {
+    icon: FaShip,
+    title: "Maritime Freight",
+    description:
+      "Containerized (FCL), conventional, or RoRo freight… Ensuring your cargo arrives safely at its destination port.",
+  },
+  {
+    icon: FaTruck,
+    title: "Road Freight",
+    description:
+      "An integral part of Vertex's multimodal network, providing safe overland point-to-point delivery.",
+  },
+  {
+    icon: FaWarehouse,
+    title: "Logistics Solutions",
+    description:
+      "We offer unique and innovative modern warehousing solutions to ensure secure product storage and distribution.",
+  },
+  {
+    icon: FaRegFileAlt,
+    title: "Customs Management",
+    description:
+      "Expert advice, strategic support, and full handling management of your complex cross-border clearance operations.",
+  },
+];
+
+const STATS = [
+  { value: 10000, label: "TEUs transported / year" },
+  { value: 1900, label: "Tons of air freight / year" },
+  { value: 8000, label: "FTL, LTL shipments / year" },
+  { value: 9000, suffix: " m²", label: "Of managed warehouses" },
+  { value: 10000, label: "Customs declarations / year" },
+];
+
+function AnimateOnScroll({ children, className = "", delay = 0 }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      } ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function AnimatedCounter({ value, suffix = "" }) {
+  const ref = useRef(null);
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setStarted(true);
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+
+    const duration = 1800;
+    const startTime = performance.now();
+
+    const tick = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * value));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  }, [started, value]);
+
+  return (
+    <span ref={ref}>
+      {count.toLocaleString()}
+      {suffix}
+    </span>
+  );
+}
 
 export default function Home() {
   const [showCookie, setShowCookie] = useState(true);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const scrollToSection = useCallback((e, href) => {
+    e.preventDefault();
+    const id = href.replace("#", "");
+    const el = document.getElementById(id);
+
+    if (el) {
+      const headerOffset = window.innerWidth >= 640 ? 112 : 80;
+      const top =
+        el.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+
+    setMobileMenu(false);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 24);
+      setShowScrollTop(scrollY > 480);
+
+      const scrollPos = scrollY + 140;
+      let current = "";
+
+      for (const id of SECTION_IDS) {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= scrollPos) current = id;
+      }
+
+      setActiveSection(current);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased">
       {/* 🍪 COOKIE BANNER */}
       {showCookie && (
-        <div className="fixed bottom-0 left-0 right-0 bg-slate-900 text-white p-4 z-50 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-slate-700 shadow-xl">
+        <div className="fixed bottom-0 left-0 right-0 bg-slate-900 text-white p-4 z-50 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-slate-700 shadow-xl animate-slide-up">
           <p className="text-sm text-slate-300 max-w-4xl text-center md:text-left">
             When you visit our website, cookies are placed on your computer,
             mobile phone, or tablet. Their purpose is to facilitate your
@@ -56,42 +226,61 @@ export default function Home() {
         </div>
 
         {/* 🧭 2. Main Navigation Bar */}
-        <div className="bg-white/80 backdrop-blur-lg border-b border-slate-200/80 transition-all duration-300">
+        <div
+          className={`bg-white/80 backdrop-blur-lg border-b transition-all duration-500 ${
+            scrolled
+              ? "bg-white/95 shadow-lg shadow-slate-900/5 border-slate-200"
+              : "border-slate-200/80"
+          }`}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
             {/* Logo */}
-            <div className="flex items-center gap-2 group cursor-pointer">
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="flex items-center gap-2 group cursor-pointer"
+            >
               <img
                 src={"/logo.png"}
                 alt="Vertex Logo"
-                className="h-9 w-auto object-contain group-hover:scale-102 transition-transform duration-300"
+                className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
-            </div>
+            </button>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-8 font-semibold text-sm text-slate-600 tracking-wide">
-              {[
-                { label: "THE GROUP", href: "#about" },
-                { label: "OUR SERVICES", href: "#services" },
-                { label: "TRACKING", href: "#tracking" },
-                { label: "CONTACT", href: "#contact" },
-              ].map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="relative py-2 text-slate-600 hover:text-blue-600 transition-colors duration-300 group"
-                >
-                  {link.label}
-                  {/* L-Khet dial hover l-m9add underneath */}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full" />
-                </a>
-              ))}
+            <nav className="hidden md:flex items-center gap-8 font-semibold text-sm tracking-wide">
+              {NAV_LINKS.map((link) => {
+                const sectionId = link.href.slice(1);
+                const isActive = activeSection === sectionId;
+
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={(e) => scrollToSection(e, link.href)}
+                    className={`relative py-2 transition-colors duration-300 group ${
+                      isActive
+                        ? "text-blue-600"
+                        : "text-slate-600 hover:text-blue-600"
+                    }`}
+                  >
+                    {link.label}
+                    <span
+                      className={`absolute bottom-0 left-0 h-0.5 bg-blue-600 transition-all duration-300 ${
+                        isActive ? "w-full" : "w-0 group-hover:w-full"
+                      }`}
+                    />
+                  </a>
+                );
+              })}
             </nav>
 
             {/* CTA Button */}
             <div className="hidden md:flex items-center gap-4">
               <a
                 href="#quote"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5"
+                onClick={(e) => scrollToSection(e, "#quote")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 hover:-translate-y-0.5 active:translate-y-0"
               >
                 Get a Quote
               </a>
@@ -117,26 +306,30 @@ export default function Home() {
           }`}
         >
           <div className="px-6 py-6 space-y-4">
-            {[
-              { label: "THE GROUP", href: "#about" },
-              { label: "OUR SERVICES", href: "#services" },
-              { label: "TRACKING", href: "#tracking" },
-              { label: "CONTACT", href: "#contact" },
-            ].map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenu(false)}
-                className="block font-semibold text-slate-700 hover:text-blue-600 p-2 rounded-lg hover:bg-slate-50 transition-all text-base tracking-wide"
-              >
-                {link.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const sectionId = link.href.slice(1);
+              const isActive = activeSection === sectionId;
+
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => scrollToSection(e, link.href)}
+                  className={`block font-semibold p-2 rounded-lg transition-all text-base tracking-wide ${
+                    isActive
+                      ? "text-blue-600 bg-blue-50"
+                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
             <div className="pt-4 border-t border-slate-100">
               <a
                 href="#quote"
-                onClick={() => setMobileMenu(false)}
-                className="block text-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold text-sm tracking-wide shadow-md transition-all"
+                onClick={(e) => scrollToSection(e, "#quote")}
+                className="block text-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold text-sm tracking-wide shadow-md transition-all hover:-translate-y-0.5"
               >
                 Get a Quote
               </a>
@@ -159,70 +352,64 @@ export default function Home() {
         {/* 🧱 3. Content container (Z-index 10) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-400/20 px-3 py-1.5 rounded-full text-blue-400 text-sm font-semibold backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-400/20 px-3 py-1.5 rounded-full text-blue-400 text-sm font-semibold backdrop-blur-sm animate-fade-in-up">
               <FaShieldAlt size={16} /> Your logistics partner par excellence
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight drop-shadow-sm">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight drop-shadow-sm animate-fade-in-up animation-delay-100">
               International Transport &{" "}
               <span className="text-blue-400">Global Logistics</span> Solutions
             </h1>
-            <p className="text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0">
+            <p className="text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 animate-fade-in-up animation-delay-200">
               As specialists in international transport, the Vertex group
               handles the shipment of your goods worldwide securely and
               efficiently.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4 animate-fade-in-up animation-delay-300">
               <a
                 href="#services"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3.5 rounded-lg transition text-center shadow-lg shadow-blue-900/40"
+                onClick={(e) => scrollToSection(e, "#services")}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3.5 rounded-lg transition-all duration-300 text-center shadow-lg shadow-blue-900/40 hover:-translate-y-0.5 hover:shadow-xl"
               >
                 Discover our services
               </a>
               <a
                 href="#quote"
-                className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3.5 rounded-lg transition text-center border border-white/20 backdrop-blur-sm"
+                onClick={(e) => scrollToSection(e, "#quote")}
+                className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3.5 rounded-lg transition-all duration-300 text-center border border-white/20 backdrop-blur-sm hover:-translate-y-0.5"
               >
                 Get a quote
               </a>
             </div>
-
-            {/* Experience Counter */}
-            {/* <div className="pt-8 flex justify-center lg:justify-start items-center gap-4">
-              <div className="text-4xl sm:text-5xl font-black text-blue-400">
-                20+
-              </div>
-              <div className="text-sm tracking-wide text-slate-400 uppercase text-left font-semibold">
-                Years of <br /> Experience
-              </div>
-            </div> */}
           </div>
 
           {/* Quick Action Card */}
-          <div className="lg:col-span-5 bg-white text-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-100 space-y-6 relative z-20">
+          <div className="lg:col-span-5 bg-white text-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-100 space-y-6 relative z-20 animate-scale-in animation-delay-400 hover:shadow-blue-900/10 transition-shadow duration-500">
             <h3 className="text-xl font-bold border-b pb-4 text-blue-900">
               Quick Booking & Quotes
             </h3>
             <div className="space-y-4">
-              <div className="p-4 bg-slate-50 rounded-xl hover:border-blue-500 border border-transparent transition">
+              <div className="p-4 bg-slate-50 rounded-xl border border-transparent hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-300 group cursor-pointer">
                 <h4 className="font-bold text-base">Reservation</h4>
                 <p className="text-xs text-slate-500 mb-2">
                   Schedule your transport online easily!
                 </p>
                 <a
                   href="#quote"
-                  className="text-sm font-bold text-blue-600 inline-flex items-center gap-1 hover:gap-2 transition"
+                  onClick={(e) => scrollToSection(e, "#quote")}
+                  className="text-sm font-bold text-blue-600 inline-flex items-center gap-1 group-hover:gap-2 transition-all duration-300"
                 >
                   Book now <FaArrowRight className="inline ml-1" size={14} />
                 </a>
               </div>
-              <div className="p-4 bg-slate-50 rounded-xl hover:border-blue-500 border border-transparent transition">
+              <div className="p-4 bg-slate-50 rounded-xl border border-transparent hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-300 group cursor-pointer">
                 <h4 className="font-bold text-base">Tell us what you need!</h4>
                 <p className="text-xs text-slate-500 mb-2">
                   Would you like to know more about our logistics solutions?
                 </p>
                 <a
                   href="#quote"
-                  className="text-sm font-bold text-blue-600 inline-flex items-center gap-1 hover:gap-2 transition"
+                  onClick={(e) => scrollToSection(e, "#quote")}
+                  className="text-sm font-bold text-blue-600 inline-flex items-center gap-1 group-hover:gap-2 transition-all duration-300"
                 >
                   My quote <FaArrowRight className="inline ml-1" size={14} />
                 </a>
@@ -233,10 +420,10 @@ export default function Home() {
       </section>
 
       {/* 📡 TRACKING SECTION */}
-      <section id="tracking" className="py-12 bg-blue-600 text-white">
+      <section id="tracking" className="py-12 bg-blue-600 text-white scroll-mt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-4 max-w-2xl">
-            <div className="p-3 bg-white/10 rounded-xl shrink-0">
+          <AnimateOnScroll className="flex items-center gap-4 max-w-2xl">
+            <div className="p-3 bg-white/10 rounded-xl shrink-0 animate-float">
               <FiActivity size={32} className="text-blue-200" />
             </div>
             <div>
@@ -248,19 +435,21 @@ export default function Home() {
                 loading status, departure, and arrival information.
               </p>
             </div>
-          </div>
-          <button className="bg-white text-blue-900 hover:bg-blue-50 font-bold px-8 py-3.5 rounded-lg transition shrink-0 shadow-lg">
-            Track your shipment
-          </button>
+          </AnimateOnScroll>
+          <AnimateOnScroll delay={150}>
+            <button className="bg-white text-blue-900 hover:bg-blue-50 font-bold px-8 py-3.5 rounded-lg transition-all duration-300 shrink-0 shadow-lg hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
+              Track your shipment
+            </button>
+          </AnimateOnScroll>
         </div>
       </section>
 
       {/* 🏢 WHO WE ARE */}
       <section
         id="about"
-        className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-16 items-center"
+        className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-16 items-center scroll-mt-28"
       >
-        <div className="lg:col-span-6 space-y-6">
+        <AnimateOnScroll className="lg:col-span-6 space-y-6">
           <div className="text-xs font-bold uppercase tracking-widest text-blue-600">
             Who We Are
           </div>
@@ -273,7 +462,7 @@ export default function Home() {
             specifically for its SME and enterprise clients worldwide.
           </p>
           <div className="grid sm:grid-cols-2 gap-6 pt-4">
-            <div className="border-l-4 border-blue-600 pl-4">
+            <div className="border-l-4 border-blue-600 pl-4 hover:pl-5 transition-all duration-300">
               <h4 className="font-bold text-lg text-slate-900">
                 Import/Export
               </h4>
@@ -281,24 +470,30 @@ export default function Home() {
                 Comprehensive global transit and forwarding networks.
               </p>
             </div>
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-blue-500 pl-4 hover:pl-5 transition-all duration-300">
               <h4 className="font-bold text-lg text-slate-900">Cross Trade</h4>
               <p className="text-sm text-slate-500 mt-1">
                 Third-country shipping routes bypassing home ports seamlessly.
               </p>
             </div>
           </div>
-        </div>
-        <div className="lg:col-span-6 bg-slate-200 h-96 rounded-2xl flex items-center justify-center text-slate-400 font-medium overflow-hidden shadow-inner relative">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/20 to-transparent"></div>
-          <img src="/container-cargo.jpg" alt="" />
-        </div>
+        </AnimateOnScroll>
+        <AnimateOnScroll delay={150} className="lg:col-span-6">
+          <div className="bg-slate-200 h-96 rounded-2xl flex items-center justify-center text-slate-400 font-medium overflow-hidden shadow-inner relative group">
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/20 to-transparent group-hover:from-blue-900/30 transition-all duration-500"></div>
+            <img
+              src="/container-cargo.jpg"
+              alt="Container cargo"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          </div>
+        </AnimateOnScroll>
       </section>
 
       {/* 💼 OUR SERVICES/EXPERTISE */}
-      <section id="services" className="py-24 bg-slate-100">
+      <section id="services" className="py-24 bg-slate-100 scroll-mt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <AnimateOnScroll className="text-center max-w-3xl mx-auto space-y-4 mb-16">
             <span className="text-xs font-bold uppercase tracking-widest text-blue-600">
               Our Expertise
             </span>
@@ -309,113 +504,37 @@ export default function Home() {
               Vertex studies and implements the optimized freight method best
               suited to your operational and financial needs.
             </p>
-          </div>
+          </AnimateOnScroll>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition flex flex-col justify-between">
-              <div>
-                <div className="p-3 bg-blue-50 text-blue-600 w-fit rounded-xl mb-6">
-                  <FaPlane size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  Air Freight
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Shipping your high-value or time-critical goods to the ends of
-                  the earth in no time.
-                </p>
-              </div>
-              <a
-                href="#contact"
-                className="text-sm font-bold text-blue-600 mt-6 inline-flex items-center gap-1 hover:gap-2 transition"
-              >
-                Learn more <FaArrowRight className="inline ml-1" size={14} />
-              </a>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition flex flex-col justify-between">
-              <div>
-                <div className="p-3 bg-blue-50 text-blue-600 w-fit rounded-xl mb-6">
-                  <FaShip size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  Maritime Freight
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Containerized (FCL), conventional, or RoRo freight… Ensuring
-                  your cargo arrives safely at its destination port.
-                </p>
-              </div>
-              <a
-                href="#contact"
-                className="text-sm font-bold text-blue-600 mt-6 inline-flex items-center gap-1 hover:gap-2 transition"
-              >
-                Learn more <FaArrowRight className="inline ml-1" size={14} />
-              </a>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition flex flex-col justify-between">
-              <div>
-                <div className="p-3 bg-blue-50 text-blue-600 w-fit rounded-xl mb-6">
-                  <FaTruck size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  Road Freight
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  An integral part of Vertex's multimodal network, providing
-                  safe overland point-to-point delivery.
-                </p>
-              </div>
-              <a
-                href="#contact"
-                className="text-sm font-bold text-blue-600 mt-6 inline-flex items-center gap-1 hover:gap-2 transition"
-              >
-                Learn more <FaArrowRight className="inline ml-1" size={14} />
-              </a>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition flex flex-col justify-between">
-              <div>
-                <div className="p-3 bg-blue-50 text-blue-600 w-fit rounded-xl mb-6">
-                  <FaWarehouse size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  Logistics Solutions
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  We offer unique and innovative modern warehousing solutions to
-                  ensure secure product storage and distribution.
-                </p>
-              </div>
-              <a
-                href="#contact"
-                className="text-sm font-bold text-blue-600 mt-6 inline-flex items-center gap-1 hover:gap-2 transition"
-              >
-                Learn more <FaArrowRight className="inline ml-1" size={14} />
-              </a>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition flex flex-col justify-between">
-              <div>
-                <div className="p-3 bg-blue-50 text-blue-600 w-fit rounded-xl mb-6">
-                  <FaRegFileAlt size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  Customs Management
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Expert advice, strategic support, and full handling management
-                  of your complex cross-border clearance operations.
-                </p>
-              </div>
-              <a
-                href="#contact"
-                className="text-sm font-bold text-blue-600 mt-6 inline-flex items-center gap-1 hover:gap-2 transition"
-              >
-                Learn more <FaArrowRight className="inline ml-1" size={14} />
-              </a>
-            </div>
+            {SERVICES.map((service, index) => {
+              const Icon = service.icon;
+              return (
+                <AnimateOnScroll key={service.title} delay={index * 80}>
+                  <div className="group bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="p-3 bg-blue-50 text-blue-600 w-fit rounded-xl mb-6 transition-all duration-300 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110">
+                        <Icon size={24} />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">
+                        {service.title}
+                      </h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        {service.description}
+                      </p>
+                    </div>
+                    <a
+                      href="#contact"
+                      onClick={(e) => scrollToSection(e, "#contact")}
+                      className="text-sm font-bold text-blue-600 mt-6 inline-flex items-center gap-1 group-hover:gap-2 transition-all duration-300"
+                    >
+                      Learn more{" "}
+                      <FaArrowRight className="inline ml-1" size={14} />
+                    </a>
+                  </div>
+                </AnimateOnScroll>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -424,71 +543,46 @@ export default function Home() {
       <section className="py-24 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-12 gap-12 items-center mb-16">
-            <div className="lg:col-span-5 space-y-4">
+            <AnimateOnScroll className="lg:col-span-5 space-y-4">
               <span className="text-xs font-bold uppercase tracking-widest text-blue-400">
                 Proven Performance
               </span>
               <h2 className="text-3xl font-extrabold sm:text-4xl">
                 Vertex in Figures
               </h2>
-            </div>
-            <div className="lg:col-span-7">
+            </AnimateOnScroll>
+            <AnimateOnScroll delay={100} className="lg:col-span-7">
               <p className="text-slate-400 text-base max-w-xl">
                 When you're looking for freight transport companies, you need to
                 know that your cargo and business are in safe hands. Here's why
                 you should choose us.
               </p>
-            </div>
+            </AnimateOnScroll>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 border-t border-slate-800 pt-12">
-            <div className="space-y-2">
-              <div className="text-3xl sm:text-4xl font-black text-blue-400">
-                10,000
-              </div>
-              <div className="text-xs uppercase tracking-wider font-bold text-slate-400">
-                TEUs transported / year
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl sm:text-4xl font-black text-blue-400">
-                1,900
-              </div>
-              <div className="text-xs uppercase tracking-wider font-bold text-slate-400">
-                Tons of air freight / year
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl sm:text-4xl font-black text-blue-400">
-                8,000
-              </div>
-              <div className="text-xs uppercase tracking-wider font-bold text-slate-400">
-                FTL, LTL shipments / year
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl sm:text-4xl font-black text-blue-400">
-                9,000 m²
-              </div>
-              <div className="text-xs uppercase tracking-wider font-bold text-slate-400">
-                Of managed warehouses
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl sm:text-4xl font-black text-blue-400">
-                10,000
-              </div>
-              <div className="text-xs uppercase tracking-wider font-bold text-slate-400">
-                Customs declarations / year
-              </div>
-            </div>
+            {STATS.map((stat, index) => (
+              <AnimateOnScroll key={stat.label} delay={index * 80}>
+                <div className="space-y-2 group">
+                  <div className="text-3xl sm:text-4xl font-black text-blue-400 transition-transform duration-300 group-hover:scale-105">
+                    <AnimatedCounter
+                      value={stat.value}
+                      suffix={stat.suffix || ""}
+                    />
+                  </div>
+                  <div className="text-xs uppercase tracking-wider font-bold text-slate-400">
+                    {stat.label}
+                  </div>
+                </div>
+              </AnimateOnScroll>
+            ))}
           </div>
         </div>
       </section>
 
       {/* 🔄 METHODOLOGY */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <AnimateOnScroll className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <span className="text-xs font-bold uppercase tracking-widest text-blue-600">
             How we operate
           </span>
@@ -499,47 +593,45 @@ export default function Home() {
             Depending on your constraints, we design the workflow best suited to
             your production deadlines.
           </p>
-        </div>
+        </AnimateOnScroll>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-xl border border-slate-200">
-            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center mb-4">
-              1
-            </div>
-            <h4 className="font-bold text-lg mb-2">Needs Analysis</h4>
-            <p className="text-sm text-slate-600">
-              Detailed auditing of cargo limits, deadlines, and cost profiles.
-            </p>
-          </div>
-          <div className="bg-white p-8 rounded-xl border border-slate-200">
-            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center mb-4">
-              2
-            </div>
-            <h4 className="font-bold text-lg mb-2">
-              Customized Transport Solutions
-            </h4>
-            <p className="text-sm text-slate-600">
-              Routing configuration using multiple integrated options.
-            </p>
-          </div>
-          <div className="bg-white p-8 rounded-xl border border-slate-200">
-            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center mb-4">
-              3
-            </div>
-            <h4 className="font-bold text-lg mb-2">Organization & Customs</h4>
-            <p className="text-sm text-slate-600">
-              Executing administrative compliance files for worry-free arrival.
-            </p>
-          </div>
+          {[
+            {
+              step: 1,
+              title: "Needs Analysis",
+              text: "Detailed auditing of cargo limits, deadlines, and cost profiles.",
+            },
+            {
+              step: 2,
+              title: "Customized Transport Solutions",
+              text: "Routing configuration using multiple integrated options.",
+            },
+            {
+              step: 3,
+              title: "Organization & Customs",
+              text: "Executing administrative compliance files for worry-free arrival.",
+            },
+          ].map((item, index) => (
+            <AnimateOnScroll key={item.step} delay={index * 100}>
+              <div className="bg-white p-8 rounded-xl border border-slate-200 hover:border-blue-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center mb-4 shadow-lg shadow-blue-600/30">
+                  {item.step}
+                </div>
+                <h4 className="font-bold text-lg mb-2">{item.title}</h4>
+                <p className="text-sm text-slate-600">{item.text}</p>
+              </div>
+            </AnimateOnScroll>
+          ))}
         </div>
       </section>
 
       {/* 📞 CTA */}
       <section
         id="quote"
-        className="py-24 bg-blue-50 border-t border-b border-blue-100"
+        className="py-24 bg-blue-50 border-t border-b border-blue-100 scroll-mt-28"
       >
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-8">
+        <AnimateOnScroll className="max-w-4xl mx-auto px-4 text-center space-y-8">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-950">
             Do you have a need, a project?
           </h2>
@@ -551,18 +643,18 @@ export default function Home() {
           <div>
             <a
               href="mailto:contact@Vertex.com"
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl transition shadow-lg shadow-blue-200"
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-blue-200 hover:-translate-y-0.5 hover:shadow-xl"
             >
               Request a quote
             </a>
           </div>
-        </div>
+        </AnimateOnScroll>
       </section>
 
       {/* 🏁 FOOTER */}
       <footer
         id="contact"
-        className="bg-slate-950 text-slate-400 pt-16 pb-8 border-t border-slate-900"
+        className="bg-slate-950 text-slate-400 pt-16 pb-8 border-t border-slate-900 scroll-mt-28"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-4 space-y-4">
@@ -714,6 +806,19 @@ export default function Home() {
           <p>Copyright © 2026 Vertex. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Back to top */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to top"
+        className={`fixed bottom-6 right-6 z-40 p-3 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:bg-blue-700 hover:-translate-y-1 hover:shadow-xl ${
+          showScrollTop
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+      >
+        <FaChevronUp size={18} />
+      </button>
     </div>
   );
 }
