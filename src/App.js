@@ -576,13 +576,22 @@ export default function Home() {
               Tel: +212 (0) 5222-49051
             </p>
             <div className="flex gap-4 pt-2 text-slate-500">
-              <a href="#" className="hover:text-blue-500 text-xs font-bold">
+              <a
+                href="https://example.com"
+                className="hover:text-blue-500 text-xs font-bold"
+              >
                 LinkedIn
               </a>
-              <a href="#" className="hover:text-blue-500 text-xs font-bold">
+              <a
+                href="https://example.com"
+                className="hover:text-blue-500 text-xs font-bold"
+              >
                 Facebook
               </a>
-              <a href="#" className="hover:text-blue-500 text-xs font-bold">
+              <a
+                href="https://example.com"
+                className="hover:text-blue-500 text-xs font-bold"
+              >
                 Twitter
               </a>
             </div>
@@ -594,17 +603,26 @@ export default function Home() {
             </h5>
             <ul className="text-xs space-y-2">
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   The group
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Career
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Contact
                 </a>
               </li>
@@ -617,27 +635,42 @@ export default function Home() {
             </h5>
             <ul className="text-xs space-y-2 grid grid-cols-2 gap-x-2 gap-y-2">
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Air Freight
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com#"
+                  className="hover:text-white transition"
+                >
                   Maritime
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Road
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Logistics
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Customs
                 </a>
               </li>
@@ -650,17 +683,26 @@ export default function Home() {
             </h5>
             <ul className="text-xs space-y-2">
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Legal notice
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Terms & Conditions
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a
+                  href="https://example.com"
+                  className="hover:text-white transition"
+                >
                   Terms of use
                 </a>
               </li>
