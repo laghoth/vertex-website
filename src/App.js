@@ -21,7 +21,7 @@ const NAV_LINKS = [
   { label: "CONTACT", href: "#contact" },
 ];
 
-const SECTION_IDS = ["about", "services", "tracking", "contact", "quote"];
+const NAV_SECTION_IDS = NAV_LINKS.map((link) => link.href.slice(1));
 
 const SERVICES = [
   {
@@ -54,14 +54,6 @@ const SERVICES = [
     description:
       "Expert advice, strategic support, and full handling management of your complex cross-border clearance operations.",
   },
-];
-
-const STATS = [
-  { value: 10000, label: "TEUs transported / year" },
-  { value: 1900, label: "Tons of air freight / year" },
-  { value: 8000, label: "FTL, LTL shipments / year" },
-  { value: 9000, suffix: " m²", label: "Of managed warehouses" },
-  { value: 10000, label: "Customs declarations / year" },
 ];
 
 function AnimateOnScroll({ children, className = "", delay = 0 }) {
@@ -99,50 +91,6 @@ function AnimateOnScroll({ children, className = "", delay = 0 }) {
   );
 }
 
-function AnimatedCounter({ value, suffix = "" }) {
-  const ref = useRef(null);
-  const [count, setCount] = useState(0);
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setStarted(true);
-      },
-      { threshold: 0.4 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!started) return;
-
-    const duration = 1800;
-    const startTime = performance.now();
-
-    const tick = (now) => {
-      const progress = Math.min((now - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * value));
-      if (progress < 1) requestAnimationFrame(tick);
-    };
-
-    requestAnimationFrame(tick);
-  }, [started, value]);
-
-  return (
-    <span ref={ref}>
-      {count.toLocaleString()}
-      {suffix}
-    </span>
-  );
-}
-
 export default function Home() {
   const [showCookie, setShowCookie] = useState(true);
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -160,6 +108,7 @@ export default function Home() {
       const top =
         el.getBoundingClientRect().top + window.scrollY - headerOffset;
       window.scrollTo({ top, behavior: "smooth" });
+      if (NAV_SECTION_IDS.includes(id)) setActiveSection(id);
     }
 
     setMobileMenu(false);
@@ -171,10 +120,11 @@ export default function Home() {
       setScrolled(scrollY > 24);
       setShowScrollTop(scrollY > 480);
 
-      const scrollPos = scrollY + 140;
-      let current = "";
+      const headerOffset = window.innerWidth >= 640 ? 112 : 80;
+      const scrollPos = scrollY + headerOffset + 80;
+      let current = NAV_SECTION_IDS[0];
 
-      for (const id of SECTION_IDS) {
+      for (const id of NAV_SECTION_IDS) {
         const el = document.getElementById(id);
         if (el && el.offsetTop <= scrollPos) current = id;
       }
@@ -419,31 +369,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 📡 TRACKING SECTION */}
-      <section id="tracking" className="py-12 bg-blue-600 text-white scroll-mt-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <AnimateOnScroll className="flex items-center gap-4 max-w-2xl">
-            <div className="p-3 bg-white/10 rounded-xl shrink-0 animate-float">
-              <FiActivity size={32} className="text-blue-200" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold uppercase tracking-wider text-blue-200">
-                TRACKING SECTION
-              </h2>
-              <p className="text-sm text-blue-50 opacity-90 mt-1">
-                Access all real-time updates provided by the carrier regarding
-                loading status, departure, and arrival information.
-              </p>
-            </div>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={150}>
-            <button className="bg-white text-blue-900 hover:bg-blue-50 font-bold px-8 py-3.5 rounded-lg transition-all duration-300 shrink-0 shadow-lg hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
-              Track your shipment
-            </button>
-          </AnimateOnScroll>
-        </div>
-      </section>
-
       {/* 🏢 WHO WE ARE */}
       <section
         id="about"
@@ -539,43 +464,93 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 📈 Vertex IN FIGURES */}
-      <section className="py-24 bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-12 gap-12 items-center mb-16">
-            <AnimateOnScroll className="lg:col-span-5 space-y-4">
-              <span className="text-xs font-bold uppercase tracking-widest text-blue-400">
-                Proven Performance
-              </span>
-              <h2 className="text-3xl font-extrabold sm:text-4xl">
-                Vertex in Figures
-              </h2>
-            </AnimateOnScroll>
-            <AnimateOnScroll delay={100} className="lg:col-span-7">
-              <p className="text-slate-400 text-base max-w-xl">
-                When you're looking for freight transport companies, you need to
-                know that your cargo and business are in safe hands. Here's why
-                you should choose us.
-              </p>
-            </AnimateOnScroll>
-          </div>
+      {/* 📡 TRACKING SECTION */}
+      <section
+        id="tracking"
+        className="py-24 bg-slate-950 text-white scroll-mt-28 relative overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/30 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl" />
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 border-t border-slate-800 pt-12">
-            {STATS.map((stat, index) => (
-              <AnimateOnScroll key={stat.label} delay={index * 80}>
-                <div className="space-y-2 group">
-                  <div className="text-3xl sm:text-4xl font-black text-blue-400 transition-transform duration-300 group-hover:scale-105">
-                    <AnimatedCounter
-                      value={stat.value}
-                      suffix={stat.suffix || ""}
-                    />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <AnimateOnScroll className="space-y-6">
+              <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-400">
+                <FiActivity size={14} />
+                Real-time visibility
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold leading-tight">
+                Track Your Shipment{" "}
+                <span className="text-blue-400">Anytime, Anywhere</span>
+              </h2>
+              <p className="text-slate-400 leading-relaxed max-w-lg">
+                Access live updates from your carrier — loading status, departure,
+                transit milestones, and estimated arrival. Full transparency on
+                every shipment.
+              </p>
+
+              <div className="grid sm:grid-cols-3 gap-4 pt-2">
+                {[
+                  { label: "Loading", status: "Confirmed" },
+                  { label: "In Transit", status: "Live" },
+                  { label: "Delivery", status: "ETA" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 text-center hover:border-blue-500/40 transition-colors duration-300"
+                  >
+                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">
+                      {item.label}
+                    </div>
+                    <div className="text-sm font-bold text-blue-400">
+                      {item.status}
+                    </div>
                   </div>
-                  <div className="text-xs uppercase tracking-wider font-bold text-slate-400">
-                    {stat.label}
+                ))}
+              </div>
+            </AnimateOnScroll>
+
+            <AnimateOnScroll delay={150}>
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl shadow-black/40">
+                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-800">
+                  <div className="p-3 bg-blue-600/20 rounded-xl">
+                    <FiActivity size={22} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">Shipment Tracker</h3>
+                    <p className="text-xs text-slate-500">
+                      Enter your reference number below
+                    </p>
                   </div>
                 </div>
-              </AnimateOnScroll>
-            ))}
+
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="tracking-ref"
+                      className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2"
+                    >
+                      Reference / BL Number
+                    </label>
+                    <input
+                      id="tracking-ref"
+                      type="text"
+                      placeholder="e.g. VTX-2026-00482"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
+                    />
+                  </div>
+                  <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-blue-600/25 hover:-translate-y-0.5 hover:shadow-blue-600/40 flex items-center justify-center gap-2">
+                    Track your shipment
+                    <FaArrowRight size={14} />
+                  </button>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-slate-800 flex items-center gap-2 text-xs text-slate-500">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Tracking system operational — updates every 15 min
+                </div>
+              </div>
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
